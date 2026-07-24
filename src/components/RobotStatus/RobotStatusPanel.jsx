@@ -6,7 +6,7 @@
 import { useState } from "react";
 import SensorStatusCard from "./SensorStatusCard";
 import SensorTogglePanel from "./SensorTogglePanel";
-import { SENSOR_TOPICS } from "../data/sensorTopics";
+import { SENSOR_TOPICS } from "../../data/sensorTopics";
 
 // Mock values for now — will be replaced with real WebSocket data later.
 const MOCK_VALUES = {

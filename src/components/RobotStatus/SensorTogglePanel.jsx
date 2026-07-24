@@ -3,7 +3,7 @@
 // it receives it via props from the parent (RobotStatusPanel),
 // so both this list and the summary cards above stay in sync.
 
-import { SENSOR_TOPICS } from "../data/sensorTopics";
+import { SENSOR_TOPICS } from "../../data/sensorTopics";
 import SensorToggleItem from "./SensorToggleItem";
 
 const MOCK_VALUES = {
