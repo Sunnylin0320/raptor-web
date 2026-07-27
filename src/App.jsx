@@ -80,27 +80,30 @@
 
 
 // Top-level layout for the RaPToR web dashboard.
-
-import RobotStatusPanel from "./components/RobotStatusPanel";
+import Header from "./components/Layout/Header";
+import RobotStatusPanel from "./components/RobotStatus/RobotStatusPanel";
+import MovementControl from "./components/MovementControl/MovementControl";
+import ActionsPanel from "./components/Actions/ActionsPanel";
+import TerminalPanel from "./components/Terminal/TerminalPanel";
+import RecordingManagement from "./components/Recording/RecordingManagement";
 
 function App() {
   return (
     <div style={{ fontFamily: "sans-serif" }}>
-      <div style={{ padding: "1rem", borderBottom: "1px solid #ddd" }}>
-        RaPToR Web · Connected to robot · Session 00:07:14
-      </div>
+      <Header />
 
       <RobotStatusPanel />
 
       <div style={{ display: "flex", gap: "1rem", padding: "1rem" }}>
         <div style={{ flex: 1, border: "1px solid #ddd", padding: "1rem" }}>
-          Movement Control
+          <MovementControl />
         </div>
         <div style={{ flex: 2, border: "1px solid #ddd", padding: "1rem" }}>
-          Actions + Event Log
+          <ActionsPanel />
+          <TerminalPanel />
         </div>
         <div style={{ flex: 1, border: "1px solid #ddd", padding: "1rem" }}>
-          Session Management
+          <RecordingManagement />
         </div>
       </div>
     </div>

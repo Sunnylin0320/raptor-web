@@ -3,29 +3,55 @@
 // on in the sensor list below — this state is "lifted up" to this
 // component so both the summary cards and the toggle list can share it.
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SensorStatusCard from "./SensorStatusCard";
 import SensorTogglePanel from "./SensorTogglePanel";
 import { SENSOR_TOPICS } from "../../data/sensorTopics";
 
-// Mock values for now — will be replaced with real WebSocket data later.
-const MOCK_VALUES = {
-  "/battery_state": "78%",
-  "/odom": "x=1.23, y=0.45",
-  "/dock_status": "Free",
-  "/hazard_detection": "None",
-};
-
 function RobotStatusPanel() {
   const [expanded, setExpanded] = useState(false);
 
-  // Lifted state: which topics are currently toggled on.
-  // Shared between the top summary cards and the toggle list below.
   const [enabledTopics, setEnabledTopics] = useState({
-    "/battery_state": true, // a couple enabled by default so the panel isn't empty
+    "/battery_state": true,
     "/dock_status": true,
     "/hazard_detection": true,
   });
+
+  // Real sensor values received from the WebSocket, keyed by topic name.
+  // e.g. { "/battery_state": "78%", "/odom": "x=1.23, y=0.45" }
+  const [sensorValues, setSensorValues] = useState({});
+
+  const [connected, setConnected] = useState(false);
+
+  // Connect to the sensor data WebSocket once, when this component mounts.
+  useEffect(() => {
+    const ws = new WebSocket("ws://10.211.55.3:6789");
+
+    ws.onopen = () => {
+      console.log("Sensor WebSocket connected");
+      setConnected(true);
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      // Merge the new data into existing values, so topics not included
+      // in this message (e.g. ones not enabled on the backend) aren't lost.
+      setSensorValues((prev) => ({ ...prev, ...data }));
+    };
+
+    ws.onclose = () => {
+      console.log("Sensor WebSocket disconnected");
+      setConnected(false);
+    };
+
+    ws.onerror = (error) => {
+      console.error("Sensor WebSocket error:", error);
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, []);
 
   const toggleTopic = (topic) => {
     setEnabledTopics((prev) => ({
@@ -34,7 +60,6 @@ function RobotStatusPanel() {
     }));
   };
 
-  // Only the topics currently toggled on will be shown as cards above.
   const activeTopics = SENSOR_TOPICS.filter(
     (sensor) => enabledTopics[sensor.topic],
   );
@@ -49,12 +74,9 @@ function RobotStatusPanel() {
           marginBottom: "1rem",
         }}
       >
-        Robot Status
+        Robot Status {connected ? "🟢" : "🔴"}
       </h3>
 
-      {/* Top row: dynamically generated from enabled sensors.
-    Fixed max height with vertical scroll, so selecting many sensors
-    doesn't push the rest of the page down indefinitely. */}
       <div
         style={{
           display: "flex",
@@ -74,12 +96,12 @@ function RobotStatusPanel() {
           <SensorStatusCard
             key={sensor.topic}
             label={sensor.topic}
-            value={MOCK_VALUES[sensor.topic] ?? "Waiting..."}
+            value={sensorValues[sensor.topic] ?? "Waiting..."}
             type="text"
           />
         ))}
       </div>
-      {/* Compact toggle row: click to expand the full sensor list */}
+
       <div style={{ paddingTop: "0.75rem" }}>
         <button
           onClick={() => setExpanded(!expanded)}
@@ -102,6 +124,7 @@ function RobotStatusPanel() {
             <SensorTogglePanel
               enabledTopics={enabledTopics}
               onToggle={toggleTopic}
+              sensorValues={sensorValues}
             />
           </div>
         )}
