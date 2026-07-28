@@ -1,10 +1,22 @@
 // A single movement control key (e.g. W, A, S, D, X for stop).
 // "active" highlights the key when it is currently selected/pressed.
+// Supports both onClick (for keys without press-and-hold behavior)
+// and onMouseDown/onMouseUp (for real-time movement control).
 
-function DirectionKey({ label, arrow, active, onClick }) {
+function DirectionKey({
+  label,
+  arrow,
+  active,
+  onClick,
+  onMouseDown,
+  onMouseUp,
+}) {
   return (
     <button
       onClick={onClick}
+      onMouseDown={onMouseDown}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseUp}
       style={{
         width: "60px",
         height: "60px",
