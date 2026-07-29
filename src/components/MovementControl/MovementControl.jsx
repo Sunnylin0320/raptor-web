@@ -1,7 +1,8 @@
 // Movement control panel: keyboard-style directional buttons,
 // arranged in a 3x3 grid (Q W E / A S D / Z X C).
-// Sends real cmd_vel key commands to ros_bridge.py over WebSocket,
-// and also listens for physical keyboard input.
+// Control is only active after "Start control" is pressed, and
+// completely disabled after "Stop control" — mirrors the original
+// RaPToR toolkit's Start/End control safety design.
 
 import { useState, useEffect, useRef } from "react";
 import DirectionKey from "./DirectionKey";
@@ -10,7 +11,16 @@ const VALID_KEYS = ["w", "a", "s", "d", "x", "q", "e", "z", "c"];
 
 function MovementControl() {
   const [activeKey, setActiveKey] = useState(null);
+  const [controlEnabled, setControlEnabled] = useState(false);
   const controlWsRef = useRef(null);
+
+  // Keep a ref mirror of controlEnabled so the keydown/keyup listeners
+  // (set up once on mount) always read the latest value, not a stale
+  // one captured at the time the effect first ran.
+  const controlEnabledRef = useRef(controlEnabled);
+  useEffect(() => {
+    controlEnabledRef.current = controlEnabled;
+  }, [controlEnabled]);
 
   useEffect(() => {
     const ws = new WebSocket("ws://10.211.55.3:6790");
@@ -28,13 +38,25 @@ function MovementControl() {
   };
 
   const handlePress = (key) => {
+    if (!controlEnabledRef.current) return;
     setActiveKey(key);
     sendKey(key);
   };
 
   const handleRelease = () => {
+    if (!controlEnabledRef.current) return;
     setActiveKey(null);
     sendKey("stop");
+  };
+
+  const handleStartControl = () => {
+    setControlEnabled(true);
+  };
+
+  const handleStopControl = () => {
+    setControlEnabled(false);
+    setActiveKey(null);
+    sendKey("stop"); // make sure the robot actually stops immediately
   };
 
   useEffect(() => {
@@ -69,7 +91,7 @@ function MovementControl() {
           marginBottom: "1rem",
         }}
       >
-        Movement Control
+        Movement Control {controlEnabled ? "🟢" : "🔴"}
       </h3>
 
       <div
@@ -78,6 +100,8 @@ function MovementControl() {
           flexDirection: "column",
           alignItems: "center",
           gap: "1rem",
+          opacity: controlEnabled ? 1 : 0.4,
+          pointerEvents: controlEnabled ? "auto" : "none",
         }}
       >
         <div
@@ -119,8 +143,8 @@ function MovementControl() {
           />
           <DirectionKey
             label="S"
-            arrow="↓"
             active={activeKey === "s"}
+            arrow="↓"
             onMouseDown={() => handlePress("s")}
             onMouseUp={handleRelease}
           />
@@ -153,21 +177,43 @@ function MovementControl() {
             onMouseUp={handleRelease}
           />
         </div>
+      </div>
 
-        <button
-          onClick={handleRelease}
-          style={{
-            width: "100%",
-            padding: "0.6rem",
-            background: "#fdecea",
-            color: "#c62828",
-            border: "1px solid #f5c6cb",
-            borderRadius: "6px",
-            cursor: "pointer",
-          }}
-        >
-          ■ Stop control
-        </button>
+      {/* Start/Stop control buttons are always clickable, regardless of controlEnabled state */}
+      <div style={{ marginTop: "1rem" }}>
+        {!controlEnabled ? (
+          <button
+            onClick={handleStartControl}
+            style={{
+              width: "100%",
+              padding: "0.6rem",
+              background: "#e8f5e9",
+              color: "#2e7d32",
+              border: "1px solid #a5d6a7",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontWeight: 600,
+            }}
+          >
+            ▶ Start control
+          </button>
+        ) : (
+          <button
+            onClick={handleStopControl}
+            style={{
+              width: "100%",
+              padding: "0.6rem",
+              background: "#fdecea",
+              color: "#c62828",
+              border: "1px solid #f5c6cb",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontWeight: 600,
+            }}
+          >
+            ■ Stop control
+          </button>
+        )}
       </div>
     </div>
   );

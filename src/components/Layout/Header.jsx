@@ -16,7 +16,7 @@ function Header() {
       <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
         <h1 style={{ fontSize: "1.2rem", margin: 0 }}>RaPToR Web</h1>
 
-        <span
+        {/* <span
           style={{
             background: "#e6f4ea",
             color: "#2e7d32",
@@ -27,9 +27,9 @@ function Header() {
           }}
         >
           ● Connected to robot
-        </span>
+        </span> */}
 
-        <span
+        {/* <span
           style={{
             background: "#fdecea",
             color: "#c62828",
@@ -40,7 +40,7 @@ function Header() {
           }}
         >
           ● Recording active
-        </span>
+        </span> */}
       </div>
 
       <div
@@ -52,8 +52,7 @@ function Header() {
           color: "#555",
         }}
       >
-        <span>Session 00:07:14</span>
-        <span>Events logged 23</span>
+
         <button
           style={{
             padding: "0.4rem 0.8rem",

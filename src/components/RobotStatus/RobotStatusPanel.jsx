@@ -11,11 +11,7 @@ import { SENSOR_TOPICS } from "../../data/sensorTopics";
 function RobotStatusPanel() {
   const [expanded, setExpanded] = useState(false);
 
-  const [enabledTopics, setEnabledTopics] = useState({
-    "/battery_state": true,
-    "/dock_status": true,
-    "/hazard_detection": true,
-  });
+  const [enabledTopics, setEnabledTopics] = useState({});
 
   // Real sensor values received from the WebSocket, keyed by topic name.
   // e.g. { "/battery_state": "78%", "/odom": "x=1.23, y=0.45" }
