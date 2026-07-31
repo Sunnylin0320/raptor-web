@@ -1,61 +1,61 @@
-// Terminal panel: displays a scrollable, auto-logged event history
-// with color-coded entry types, plus an input field for executing
-// commands directly. New commands are appended to the log in real time.
+// Terminal panel: fully replicates the original Tkinter terminal.py behavior.
+// Commands typed here are sent to ros_bridge.py and executed as real shell
+// commands via subprocess; output streams back in real time, with stderr
+// lines shown in red.
 
-import { useState } from "react";
-
-const TYPE_COLORS = {
-  info: "#333",
-  success: "#2e7d32",
-  warning: "#c62828",
-  highlight: "#1565c0",
-};
+import { useState, useEffect, useRef } from "react";
 
 function TerminalPanel() {
   const [command, setCommand] = useState("");
-
-  const [logs, setLogs] = useState([
-    { timestamp: "18:42:01", message: "Control started", type: "success" },
+  const [lines, setLines] = useState([
     {
-      timestamp: "18:42:03",
-      message: "W pressed — linear: 1.0, angular: 0.0",
-      type: "info",
-    },
-    {
-      timestamp: "18:42:04",
-      message: "A pressed — linear: 0.0, angular: 1.0",
-      type: "info",
-    },
-    {
-      timestamp: "18:42:06",
-      message: "Recording started: Trial_03",
-      type: "highlight",
-    },
-    {
-      timestamp: "18:42:09",
-      message: "IR right critically low (8)",
-      type: "warning",
+      text: "Terminal ready. Type a command and press Enter or Execute.",
+      isError: false,
     },
   ]);
+  const terminalWsRef = useRef(null);
+  const outputRef = useRef(null);
 
-  const getCurrentTimestamp = () => {
-    const now = new Date();
-    return now.toTimeString().slice(0, 8); // HH:MM:SS
-  };
+  useEffect(() => {
+    const ws = new WebSocket("ws://10.211.55.3:6790");
+
+    ws.onopen = () => console.log("Terminal WebSocket connected");
+    ws.onerror = (error) => console.error("Terminal WebSocket error:", error);
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === "terminal_output") {
+        setLines((prev) => [
+          ...prev,
+          { text: data.line, isError: data.is_error },
+        ]);
+      } else if (data.type === "terminal_clear") {
+        setLines([]);
+      }
+    };
+
+    terminalWsRef.current = ws;
+
+    return () => {
+      ws.close();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (outputRef.current) {
+      outputRef.current.scrollTop = outputRef.current.scrollHeight;
+    }
+  }, [lines]);
 
   const handleExecute = () => {
     if (!command.trim()) return;
 
-    // Placeholder for now — will later send the command through the
-    // WebSocket to ros_bridge.py, which will run it and log the real output.
-    setLogs((prev) => [
+    setLines((prev) => [
       ...prev,
-      {
-        timestamp: getCurrentTimestamp(),
-        message: `$ ${command}`,
-        type: "info",
-      },
+      { text: `$ ${command}`, isError: false, isCommand: true },
     ]);
+    terminalWsRef.current?.send(JSON.stringify({ command }));
     setCommand("");
   };
 
@@ -67,67 +67,63 @@ function TerminalPanel() {
 
   return (
     <div>
-      <div
+      <h3
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          fontSize: "0.75rem",
+          color: "#888",
+          textTransform: "uppercase",
           marginBottom: "0.5rem",
         }}
       >
-        <h3
-          style={{
-            fontSize: "0.75rem",
-            color: "#888",
-            textTransform: "uppercase",
-            margin: 0,
-          }}
-        >
-          Terminal{" "}
-        </h3>
-      </div>
+        Terminal
+      </h3>
 
-      {/* Scrollable log area with fixed height */}
       <div
+        ref={outputRef}
         style={{
           background: "#fafafa",
           border: "1px solid #eee",
-          borderRadius: "6px",
+          color: "#333",
+          fontFamily: "monospace",
+          fontSize: "0.8rem",
           padding: "0.75rem",
-          maxHeight: "180px",
+          height: "220px",
           overflowY: "auto",
+          whiteSpace: "pre-wrap",
           marginBottom: "0.75rem",
+          borderRadius: "4px",
         }}
       >
-        {logs.map((log, index) => (
+        {lines.map((line, index) => (
           <div
             key={index}
             style={{
-              color: TYPE_COLORS[log.type] ?? TYPE_COLORS.info,
-              fontSize: "0.85rem",
-              marginBottom: "0.5rem",
+              color: line.isError
+                ? "#c62828"
+                : line.isCommand
+                  ? "#1565c0"
+                  : "#333",
             }}
           >
-            [{log.timestamp}] {log.message}
+            {line.text}
           </div>
         ))}
       </div>
 
-      {/* Command input */}
-      <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-        <span style={{ color: "#888" }}>$</span>
+      <div style={{ display: "flex", gap: "0.5rem" }}>
         <input
           type="text"
           value={command}
           onChange={(e) => setCommand(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Enter ROS 2 command, e.g. ros2 topic list"
+          placeholder="Enter a command..."
           style={{
             flex: 1,
             padding: "0.6rem",
             border: "1px solid #ccc",
-            borderRadius: "6px",
+            borderRadius: "4px",
             fontSize: "0.85rem",
+            fontFamily: "monospace",
           }}
         />
         <button
@@ -137,7 +133,7 @@ function TerminalPanel() {
             background: "#333",
             color: "#fff",
             border: "none",
-            borderRadius: "6px",
+            borderRadius: "4px",
             cursor: "pointer",
             fontWeight: 600,
           }}
