@@ -30,22 +30,44 @@ const ACTIONS = [
     label: "Navigate",
     icon: "📍",
     requiresParams: true,
-    defaultParams: "goal_pose: {pose: {position: {x: 1.0, y: 0.5}}}",
+    isJson: true,
+    defaultParams: JSON.stringify(
+      { goal_pose: { pose: { position: { x: 1.0, y: 0.5 } } } },
+      null,
+      2,
+    ),
   },
   {
     name: "audio_note_sequence",
     label: "Audio sequence",
     icon: "♪",
     requiresParams: true,
-    defaultParams:
-      "iterations: 1, note_sequence: {append: false, notes: [{frequency: 440, max_runtime: {sec: 0, nanosec: 500000000}}]}",
+    isJson: true,
+    defaultParams: JSON.stringify(
+      {
+        iterations: 1,
+        note_sequence: {
+          append: false,
+          notes: [
+            { frequency: 440, max_runtime: { sec: 0, nanosec: 500000000 } },
+          ],
+        },
+      },
+      null,
+      2,
+    ),
   },
   {
     name: "led_animation",
     label: "LED animation",
     icon: "💡",
     requiresParams: true,
-    defaultParams: "animation_type: 1, max_runtime: {sec: 3, nanosec: 0}",
+    isJson: true,
+    defaultParams: JSON.stringify(
+      { animation_type: 1, max_runtime: { sec: 3, nanosec: 0 } },
+      null,
+      2,
+    ),
   },
   {
     name: "drive_distance",
@@ -56,9 +78,8 @@ const ACTIONS = [
   },
 ];
 
-// Parses a simple "key: value, key2: value2" string into an object.
-// Values that look like numbers are converted to numbers.
-function parseParamText(text) {
+// Parses a simple "key: value, key2: value2" string (for flat params).
+function parseFlatParamText(text) {
   const params = {};
   if (!text.trim()) return params;
 
@@ -75,6 +96,7 @@ function parseParamText(text) {
 function ActionsPanel() {
   const [selectedAction, setSelectedAction] = useState(null);
   const [paramText, setParamText] = useState("");
+  const [paramError, setParamError] = useState("");
   const actionWsRef = useRef(null);
 
   useEffect(() => {
@@ -95,6 +117,7 @@ function ActionsPanel() {
 
   const handleActionClick = (action) => {
     setSelectedAction(action.name);
+    setParamError("");
 
     if (!action.requiresParams) {
       sendAction(action.name, {});
@@ -105,8 +128,22 @@ function ActionsPanel() {
   };
 
   const handleRun = () => {
-    const params = parseParamText(paramText);
-    sendAction(selectedAction, params);
+    const action = ACTIONS.find((a) => a.name === selectedAction);
+    setParamError("");
+
+    if (action.isJson) {
+      // Nested-parameter actions: parse as real JSON
+      try {
+        const params = JSON.parse(paramText);
+        sendAction(selectedAction, params);
+      } catch (e) {
+        setParamError("Invalid JSON: " + e.message);
+      }
+    } else {
+      // Flat parameter actions: use the simple key:value parser
+      const params = parseFlatParamText(paramText);
+      sendAction(selectedAction, params);
+    }
   };
 
   const selectedActionData = ACTIONS.find((a) => a.name === selectedAction);
@@ -157,22 +194,58 @@ function ActionsPanel() {
             }}
           >
             {selectedActionData.label}
+            {selectedActionData.isJson && (
+              <span
+                style={{
+                  fontSize: "0.7rem",
+                  color: "#999",
+                  fontWeight: 400,
+                  marginLeft: "0.5rem",
+                }}
+              >
+                (JSON format)
+              </span>
+            )}
           </div>
 
-          <div style={{ display: "flex", gap: "0.5rem" }}>
-            <input
-              type="text"
-              value={paramText}
-              onChange={(e) => setParamText(e.target.value)}
-              placeholder="Enter parameters, e.g. angle: 1.57"
-              style={{
-                flex: 1,
-                padding: "0.6rem",
-                border: "1px solid #ccc",
-                borderRadius: "6px",
-                fontSize: "0.85rem",
-              }}
-            />
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+          >
+            {selectedActionData.isJson ? (
+              <textarea
+                value={paramText}
+                onChange={(e) => setParamText(e.target.value)}
+                rows={6}
+                style={{
+                  padding: "0.6rem",
+                  border: "1px solid #ccc",
+                  borderRadius: "6px",
+                  fontSize: "0.8rem",
+                  fontFamily: "monospace",
+                  resize: "vertical",
+                }}
+              />
+            ) : (
+              <input
+                type="text"
+                value={paramText}
+                onChange={(e) => setParamText(e.target.value)}
+                placeholder="Enter parameters, e.g. angle: 1.57"
+                style={{
+                  padding: "0.6rem",
+                  border: "1px solid #ccc",
+                  borderRadius: "6px",
+                  fontSize: "0.85rem",
+                }}
+              />
+            )}
+
+            {paramError && (
+              <div style={{ color: "#c62828", fontSize: "0.75rem" }}>
+                {paramError}
+              </div>
+            )}
+
             <button
               onClick={handleRun}
               style={{
@@ -183,6 +256,7 @@ function ActionsPanel() {
                 borderRadius: "6px",
                 cursor: "pointer",
                 fontWeight: 600,
+                alignSelf: "flex-start",
               }}
             >
               ▶ Run
