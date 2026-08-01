@@ -1,35 +1,53 @@
-import { useState, useEffect } from "react";
+// Recording management panel: start/stop recording key sequences from
+// Movement Control, manage the list of saved recordings, and trigger
+// playback. Mirrors the original Tkinter move.py's recording format:
+// a list of (key, duration) pairs.
+
+import { useState, useEffect, useRef } from "react";
 import RecordingItem from "./RecordingItem";
 
-function RecordingManagement() {
-  const [activeRecording, setActiveRecording] = useState(() => ({
-    name: "Trial_03",
-    startTime: Date.now() - 2 * 60 * 1000 - 14 * 1000,
-  }));
-
-  const [recordings, setRecordings] = useState([
-    { name: "Trial_01" },
-    { name: "Trial_02" },
-  ]);
-
-  // "now" is updated every second while a recording is active, so the
-  // duration display ticks forward in real time. Date.now() is only
-  // called inside this effect (not during render), which keeps the
-  // component's render logic pure.
+function RecordingManagement({
+  isRecording,
+  setIsRecording,
+  currentSequence,
+  setCurrentSequence,
+}) {
+  const [recordings, setRecordings] = useState({});
+  const [recordingStartTime, setRecordingStartTime] = useState(null);
   const [now, setNow] = useState(() => Date.now());
+  const controlWsRef = useRef(null);
 
+  // Separate WebSocket connection dedicated to recording save/load/play,
+  // so it doesn't interfere with the movement control connection.
   useEffect(() => {
-    if (!activeRecording) return;
+    const ws = new WebSocket("ws://10.211.55.3:6790");
+    ws.onopen = () => console.log("Recording WebSocket connected");
+    ws.onerror = (error) => console.error("Recording WebSocket error:", error);
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === "recordings_list") {
+        setRecordings(data.recordings);
+      }
+    };
+    controlWsRef.current = ws;
 
-    const intervalId = setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
+    // Request the existing recordings list on connect
+    ws.addEventListener("open", () => {
+      ws.send(JSON.stringify({ recording_action: "list" }));
+    });
 
+    return () => {
+      ws.close();
+    };
+  }, []);
+
+  // Tick every second while recording, so the duration display updates.
+  useEffect(() => {
+    if (!isRecording) return;
+    const intervalId = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(intervalId);
-  }, [activeRecording]);
+  }, [isRecording]);
 
-  // Pure function: takes two numbers, returns a string. No calls to
-  // Date.now() or anything else unstable — safe to call during render.
   const formatDuration = (startTime, currentTime) => {
     const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
     const minutes = Math.floor(elapsedSeconds / 60);
@@ -37,28 +55,58 @@ function RecordingManagement() {
     return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   };
 
+  const handleStartRecording = () => {
+    setCurrentSequence([]);
+    setRecordingStartTime(Date.now());
+    setIsRecording(true);
+  };
+
   const handleStopRecording = () => {
-    if (!activeRecording) return;
-    setRecordings((prev) => [...prev, { name: activeRecording.name }]);
-    setActiveRecording(null);
-  };
+    setIsRecording(false);
 
-  const handleNewRecording = () => {
-    if (activeRecording) return;
-    const nextIndex = recordings.length + 1;
-    setActiveRecording({
-      name: `Trial_${String(nextIndex).padStart(2, "0")}`,
-      startTime: Date.now(),
-    });
-  };
+    // Convert the raw {key, timestamp} events into (key, duration) pairs,
+    // matching the original move.py format.
+    const pairs = [];
+    for (let i = 0; i < currentSequence.length; i++) {
+      const current = currentSequence[i];
+      const next = currentSequence[i + 1];
+      const durationMs = next ? next.timestamp - current.timestamp : 0;
+      pairs.push([current.key, durationMs / 1000]);
+    }
 
-  const handleDelete = (name) => {
-    setRecordings((prev) => prev.filter((r) => r.name !== name));
+    const nextIndex = Object.keys(recordings).length + 1;
+    const name = `Recording_${String(nextIndex).padStart(2, "0")}`;
+
+    controlWsRef.current?.send(
+      JSON.stringify({
+        recording_action: "save",
+        name,
+        sequence: pairs,
+      }),
+    );
+
+    setCurrentSequence([]);
   };
 
   const handlePlay = (name) => {
-    console.log(`Playing recording: ${name}`);
+    controlWsRef.current?.send(
+      JSON.stringify({
+        recording_action: "play",
+        name,
+      }),
+    );
   };
+
+  const handleDelete = (name) => {
+    controlWsRef.current?.send(
+      JSON.stringify({
+        recording_action: "delete",
+        name,
+      }),
+    );
+  };
+
+  const recordingNames = Object.keys(recordings);
 
   return (
     <div>
@@ -73,40 +121,42 @@ function RecordingManagement() {
         Session Management
       </h3>
 
-      {activeRecording && (
+      {isRecording && (
         <RecordingItem
-          name={activeRecording.name}
-          duration={formatDuration(activeRecording.startTime, now)}
+          name="Recording in progress"
+          duration={formatDuration(recordingStartTime, now)}
           isRecording={true}
           onStop={handleStopRecording}
         />
       )}
 
-      {recordings.map((recording) => (
+      {recordingNames.map((name) => (
         <RecordingItem
-          key={recording.name}
-          name={recording.name}
+          key={name}
+          name={name}
           isRecording={false}
-          onPlay={() => handlePlay(recording.name)}
-          onDelete={() => handleDelete(recording.name)}
+          onPlay={() => handlePlay(name)}
+          onDelete={() => handleDelete(name)}
         />
       ))}
 
-      <button
-        onClick={handleNewRecording}
-        style={{
-          width: "100%",
-          padding: "0.6rem",
-          marginTop: "0.5rem",
-          border: "1px solid #ccc",
-          borderRadius: "6px",
-          background: "#f5f5f5",
-          color: "#333",
-          cursor: "pointer",
-        }}
-      >
-        + New recording
-      </button>
+      {!isRecording && (
+        <button
+          onClick={handleStartRecording}
+          style={{
+            width: "100%",
+            padding: "0.6rem",
+            marginTop: "0.5rem",
+            border: "1px solid #ccc",
+            borderRadius: "6px",
+            background: "#f5f5f5",
+            color: "#333",
+            cursor: "pointer",
+          }}
+        >
+          ● New recording
+        </button>
+      )}
     </div>
   );
 }

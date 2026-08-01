@@ -78,8 +78,8 @@
 
 // export default App;
 
-
 // Top-level layout for the RaPToR web dashboard.
+import { useState } from "react";
 import Header from "./components/Layout/Header";
 import RobotStatusPanel from "./components/RobotStatus/RobotStatusPanel";
 import MovementControl from "./components/MovementControl/MovementControl";
@@ -88,22 +88,50 @@ import TerminalPanel from "./components/Terminal/TerminalPanel";
 import RecordingManagement from "./components/Recording/RecordingManagement";
 
 function App() {
+  // Lifted state: whether we're currently recording, and the sequence
+  // of {key, timestamp} events captured so far. Shared between
+  // MovementControl (which captures key presses) and RecordingManagement
+  // (which controls start/stop and manages the saved recordings list).
+  const [isRecording, setIsRecording] = useState(false);
+  const [currentSequence, setCurrentSequence] = useState([]);
+
+  const recordKeyEvent = (key) => {
+    setCurrentSequence((prev) => [...prev, { key, timestamp: Date.now() }]);
+  };
+
   return (
     <div style={{ fontFamily: "sans-serif" }}>
       <Header />
-
       <RobotStatusPanel />
 
       <div style={{ display: "flex", gap: "1rem", padding: "1rem" }}>
         <div style={{ flex: 1, border: "1px solid #ddd", padding: "1rem" }}>
-          <MovementControl />
+          <MovementControl
+            onKeyEvent={isRecording ? recordKeyEvent : undefined}
+          />
         </div>
-        <div style={{ flex: 2, border: "1px solid #ddd", padding: "1rem" }}>
-          <ActionsPanel />
-          <TerminalPanel />
+        <div
+          style={{
+            flex: 2,
+            display: "flex",
+            flexDirection: "column",
+            gap: "1rem",
+          }}
+        >
+          <div style={{ border: "1px solid #ddd", padding: "1rem" }}>
+            <ActionsPanel />
+          </div>
+          <div style={{ border: "1px solid #ddd", padding: "1rem" }}>
+            <TerminalPanel />
+          </div>
         </div>
         <div style={{ flex: 1, border: "1px solid #ddd", padding: "1rem" }}>
-          <RecordingManagement />
+          <RecordingManagement
+            isRecording={isRecording}
+            setIsRecording={setIsRecording}
+            currentSequence={currentSequence}
+            setCurrentSequence={setCurrentSequence}
+          />
         </div>
       </div>
     </div>
