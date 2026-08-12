@@ -118,7 +118,7 @@ function RecordingManagement({
           marginBottom: "1rem",
         }}
       >
-        Session Management
+        Recording Management
       </h3>
 
       {isRecording && (

@@ -1,85 +1,8 @@
-// import { useState, useEffect, useRef } from "react";
-
-// function App() {
-//   const [batteryData, setBatteryData] = useState(null);
-//   const [connected, setConnected] = useState(false);
-//   const controlWsRef = useRef(null);
-
-//   useEffect(() => {
-//     // receive sensor data
-//     const dataWs = new WebSocket("ws://10.211.55.3:6789");
-//     dataWs.onopen = () => {
-//       console.log("Data WebSocket connected");
-//       setConnected(true);
-//     };
-//     dataWs.onmessage = (event) => {
-//       const data = JSON.parse(event.data);
-//       console.log("Received:", data);
-//       setBatteryData(data);
-//     };
-//     dataWs.onclose = () => {
-//       console.log("Data WebSocket disconnected");
-//       setConnected(false);
-//     };
-//     dataWs.onerror = (error) => {
-//       console.error("Data WebSocket error:", error);
-//     };
-
-//     // sending control commands (keyboard input)
-//     const controlWs = new WebSocket("ws://10.211.55.3:6790");
-//     controlWs.onopen = () => console.log("Control WebSocket connected");
-//     controlWs.onerror = (error) =>
-//       console.error("Control WebSocket error:", error);
-//     controlWsRef.current = controlWs;
-
-//     return () => {
-//       dataWs.close();
-//       controlWs.close();
-//     };
-//   }, []);
-
-//   useEffect(() => {
-//     const handleKeyDown = (e) => {
-//       const key = e.key.toLowerCase();
-//       if (["w", "a", "s", "d"].includes(key)) {
-//         controlWsRef.current?.send(JSON.stringify({ key }));
-//       }
-//     };
-//     const handleKeyUp = (e) => {
-//       const key = e.key.toLowerCase();
-//       if (["w", "a", "s", "d"].includes(key)) {
-//         controlWsRef.current?.send(JSON.stringify({ key: "stop" }));
-//       }
-//     };
-
-//     window.addEventListener("keydown", handleKeyDown);
-//     window.addEventListener("keyup", handleKeyUp);
-//     return () => {
-//       window.removeEventListener("keydown", handleKeyDown);
-//       window.removeEventListener("keyup", handleKeyUp);
-//     };
-//   }, []);
-
-//   return (
-//     <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
-//       <h1>RaPToR Web Dashboard</h1>
-//       <p>Connection status: {connected ? "✅ Connected" : "❌ Disconnected"}</p>
-//       <p>
-//         Use W / A / S / D to move the robot (click on the page first to focus)
-//       </p>
-//       {batteryData && (
-//         <pre style={{ background: "#f0f0f0", padding: "1rem" }}>
-//           {JSON.stringify(batteryData, null, 2)}
-//         </pre>
-//       )}
-//     </div>
-//   );
-// }
 
 // export default App;
 
 // Top-level layout for the RaPToR web dashboard.
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "./components/Layout/Header";
 import RobotStatusPanel from "./components/RobotStatus/RobotStatusPanel";
 import MovementControl from "./components/MovementControl/MovementControl";
@@ -88,12 +11,38 @@ import TerminalPanel from "./components/Terminal/TerminalPanel";
 import RecordingManagement from "./components/Recording/RecordingManagement";
 
 function App() {
-  // Lifted state: whether we're currently recording, and the sequence
-  // of {key, timestamp} events captured so far. Shared between
-  // MovementControl (which captures key presses) and RecordingManagement
-  // (which controls start/stop and manages the saved recordings list).
+  const [connected, setConnected] = useState(false);
+  const [sensorValues, setSensorValues] = useState({});
+
   const [isRecording, setIsRecording] = useState(false);
   const [currentSequence, setCurrentSequence] = useState([]);
+
+  useEffect(() => {
+    const ws = new WebSocket("ws://10.211.55.3:6789");
+
+    ws.onopen = () => {
+      console.log("Sensor WebSocket connected");
+      setConnected(true);
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setSensorValues((prev) => ({ ...prev, ...data }));
+    };
+
+    ws.onclose = () => {
+      console.log("Sensor WebSocket disconnected");
+      setConnected(false);
+    };
+
+    ws.onerror = (error) => {
+      console.error("Sensor WebSocket error:", error);
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, []);
 
   const recordKeyEvent = (key) => {
     setCurrentSequence((prev) => [...prev, { key, timestamp: Date.now() }]);
@@ -101,8 +50,8 @@ function App() {
 
   return (
     <div style={{ fontFamily: "sans-serif" }}>
-      <Header />
-      <RobotStatusPanel />
+      <Header connected={connected} />
+      <RobotStatusPanel connected={connected} sensorValues={sensorValues} />
 
       <div style={{ display: "flex", gap: "1rem", padding: "1rem" }}>
         <div style={{ flex: 1, border: "1px solid #ddd", padding: "1rem" }}>
