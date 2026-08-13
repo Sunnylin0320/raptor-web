@@ -14,6 +14,13 @@ const cardStyle = {
   backgroundColor: "#fff",
 };
 
+const headerCardStyle = {
+  border: "1px solid #e0e0e0",
+  borderRadius: "10px",
+  padding: "0.02rem 1rem",
+  backgroundColor: "#fff",
+};
+
 function App() {
   const [connected, setConnected] = useState(false);
   const [sensorValues, setSensorValues] = useState({});
@@ -54,7 +61,7 @@ function App() {
 
   return (
     <div style={{ fontFamily: "Inter, sans-serif", padding: "1rem" }}>
-      <div style={{ ...cardStyle, marginBottom: "1rem" }}>
+      <div style={{ ...headerCardStyle, marginBottom: "1rem" }}>
         <Header connected={connected} />
       </div>
 

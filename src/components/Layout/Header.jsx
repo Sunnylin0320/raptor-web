@@ -12,7 +12,17 @@ function Header({ connected }) {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-        <h1 style={{ fontSize: "1.2rem", margin: 0 }}>RaPToR Web</h1>
+        <h1
+          style={{
+            fontSize: "1.2rem",
+            margin: 0,
+            fontFamily: "'Inter', sans-serif",
+            fontWeight: 400,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          RaPToR Web
+        </h1>
 
         <span
           style={{
