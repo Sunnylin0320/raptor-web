@@ -6,28 +6,23 @@
 import { SENSOR_TOPICS } from "../../data/sensorTopics";
 import SensorToggleItem from "./SensorToggleItem";
 
-const MOCK_VALUES = {
-  "/battery_state": "78%",
-  "/odom": "x=1.23, y=0.35",
-};
-
 function SensorTogglePanel({ enabledTopics, onToggle }) {
   return (
     <div
       style={{
-        display: "flex",
-        overflowX: "auto",
-        gap: "0.5rem",
-        paddingBottom: "0.5rem",
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+        gap: "0.6rem 1rem",
+        maxHeight: "220px",
+        overflowY: "auto",
+        paddingRight: "0.5rem",
       }}
     >
       {SENSOR_TOPICS.map((sensor) => (
         <SensorToggleItem
           key={sensor.topic}
           topic={sensor.topic}
-          description={sensor.description}
           enabled={!!enabledTopics[sensor.topic]}
-          value={MOCK_VALUES[sensor.topic]}
           onToggle={() => onToggle(sensor.topic)}
         />
       ))}

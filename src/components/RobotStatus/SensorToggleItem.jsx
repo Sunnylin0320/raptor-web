@@ -1,54 +1,54 @@
-function SensorToggleItem({ topic, description, enabled, value, onToggle }) { // 5 props
+import { formatSensorName } from "../../utils/formatSensorName";
+
+function SensorToggleItem({ topic, enabled, onToggle }) {
   return (
-    <div
+    <label
       style={{
-        flexShrink: 0,
-        width: "200px", // slightly wider to accommodate longer topic names
-        border: "1px solid #eee",
-        borderRadius: "6px",
-        padding: "0.5rem",
-        boxSizing: "border-box",
+        display: "flex",
+        alignItems: "center",
+        gap: "0.35rem",
+        cursor: "pointer",
       }}
     >
-      <label
+      <span
+        onClick={onToggle}
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "0.4rem",
-          cursor: "pointer",
+          position: "relative",
+          display: "inline-block",
+          width: "26px",
+          height: "15px",
+          borderRadius: "8px",
+          backgroundColor: enabled ? "#4caf50" : "#ccc",
+          transition: "background-color 0.2s",
+          flexShrink: 0,
         }}
       >
-        <input type="checkbox" checked={enabled} onChange={onToggle} />
         <span
           style={{
-            fontSize: "0.8rem",
-            fontWeight: 500,
-            wordBreak: "break-word",
+            position: "absolute",
+            top: "2px",
+            left: enabled ? "13px" : "2px",
+            width: "11px",
+            height: "11px",
+            borderRadius: "50%",
+            backgroundColor: "#fff",
+            transition: "left 0.2s",
+            boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
           }}
-        >
-          {topic}
-        </span>
-      </label>
+        />
+      </span>
 
-      <div style={{ fontSize: "0.65rem", color: "#999", marginTop: "0.2rem" }}>
-        {description}
-      </div>
-
-      {enabled && (
-        <pre
-          style={{
-            background: "#f5f5f5",
-            padding: "0.3rem",
-            fontSize: "0.65rem",
-            marginTop: "0.3rem",
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-word",
-          }}
-        >
-          {value ?? "Waiting..."}
-        </pre>
-      )}
-    </div>
+      <span
+        style={{
+          fontSize: "0.75rem",
+          color: "#444",
+          wordBreak: "break-word",
+          lineHeight: 1.2,
+        }}
+      >
+        {formatSensorName(topic)}
+      </span>
+    </label>
   );
 }
 

@@ -2,8 +2,9 @@ import { useState } from "react";
 import SensorStatusCard from "./SensorStatusCard";
 import SensorTogglePanel from "./SensorTogglePanel";
 import { SENSOR_TOPICS } from "../../data/sensorTopics";
+import { formatSensorName } from "../../utils/formatSensorName";
 
-function RobotStatusPanel({ connected, sensorValues }) {
+function RobotStatusPanel({ sensorValues }) {
   const [expanded, setExpanded] = useState(false);
   const [enabledTopics, setEnabledTopics] = useState({});
 
@@ -19,16 +20,18 @@ function RobotStatusPanel({ connected, sensorValues }) {
   );
 
   return (
-    <div style={{ border: "1px solid #ddd", padding: "1rem" }}>
+    <div style={{ padding: "1rem" }}>
       <h3
         style={{
           fontSize: "0.75rem",
           color: "#888",
           textTransform: "uppercase",
+          marginTop: 0,
           marginBottom: "1rem",
         }}
       >
-        Robot Status {connected ? "🟢" : "🔴"}
+        Robot Status
+        {/* {connected ? "🟢" : "🔴"} */}
       </h3>
 
       <div
@@ -49,7 +52,7 @@ function RobotStatusPanel({ connected, sensorValues }) {
         {activeTopics.map((sensor) => (
           <SensorStatusCard
             key={sensor.topic}
-            label={sensor.topic}
+            label={formatSensorName(sensor.topic)}
             value={sensorValues[sensor.topic] ?? "Waiting..."}
             type="text"
           />
