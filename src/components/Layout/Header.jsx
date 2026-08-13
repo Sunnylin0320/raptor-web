@@ -9,7 +9,6 @@ function Header({ connected }) {
         alignItems: "center",
         justifyContent: "space-between",
         padding: "1rem",
-        borderBottom: "1px solid #ddd",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>

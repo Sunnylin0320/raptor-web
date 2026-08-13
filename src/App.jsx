@@ -1,6 +1,3 @@
-
-// export default App;
-
 // Top-level layout for the RaPToR web dashboard.
 import { useState, useEffect } from "react";
 import Header from "./components/Layout/Header";
@@ -9,6 +6,13 @@ import MovementControl from "./components/MovementControl/MovementControl";
 import ActionsPanel from "./components/Actions/ActionsPanel";
 import TerminalPanel from "./components/Terminal/TerminalPanel";
 import RecordingManagement from "./components/Recording/RecordingManagement";
+
+const cardStyle = {
+  border: "1px solid #e0e0e0",
+  borderRadius: "10px",
+  padding: "1rem",
+  backgroundColor: "#fff",
+};
 
 function App() {
   const [connected, setConnected] = useState(false);
@@ -49,12 +53,17 @@ function App() {
   };
 
   return (
-    <div style={{ fontFamily: "sans-serif" }}>
-      <Header connected={connected} />
-      <RobotStatusPanel connected={connected} sensorValues={sensorValues} />
+    <div style={{ fontFamily: "Inter, sans-serif", padding: "1rem" }}>
+      <div style={{ ...cardStyle, marginBottom: "1rem" }}>
+        <Header connected={connected} />
+      </div>
 
-      <div style={{ display: "flex", gap: "1rem", padding: "1rem" }}>
-        <div style={{ flex: 1, border: "1px solid #ddd", padding: "1rem" }}>
+      <div style={{ ...cardStyle, marginBottom: "1rem" }}>
+        <RobotStatusPanel connected={connected} sensorValues={sensorValues} />
+      </div>
+
+      <div style={{ display: "flex", gap: "1rem" }}>
+        <div style={{ ...cardStyle, flex: 1 }}>
           <MovementControl
             onKeyEvent={isRecording ? recordKeyEvent : undefined}
           />
@@ -67,14 +76,14 @@ function App() {
             gap: "1rem",
           }}
         >
-          <div style={{ border: "1px solid #ddd", padding: "1rem" }}>
+          <div style={cardStyle}>
             <ActionsPanel />
           </div>
-          <div style={{ border: "1px solid #ddd", padding: "1rem" }}>
+          <div style={cardStyle}>
             <TerminalPanel />
           </div>
         </div>
-        <div style={{ flex: 1, border: "1px solid #ddd", padding: "1rem" }}>
+        <div style={{ ...cardStyle, flex: 1 }}>
           <RecordingManagement
             isRecording={isRecording}
             setIsRecording={setIsRecording}
