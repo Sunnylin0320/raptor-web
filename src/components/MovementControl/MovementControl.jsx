@@ -1,17 +1,26 @@
+// Movement control panel: keyboard-style directional buttons,
+// arranged in a 3x3 grid (Q W E / A S D / Z X C).
+// Control is only active after "Start control" is pressed, and
+// completely disabled after "Stop control" — mirrors the original
+// RaPToR toolkit's Start/End control safety design.
+// Start control also requires the robot to be connected; if not,
+// the user is shown a toast notification prompting them to connect first.
+//
+// Also reports every key press/release to the parent via onKeyEvent,
+// so RecordingManagement can capture the sequence when recording is active.
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import DirectionKey from "./DirectionKey";
 
 const VALID_KEYS = ["w", "a", "s", "d", "x", "q", "e", "z", "c"];
 
-function MovementControl({ connected, onKeyEvent }) {
+function MovementControl({ connected, onKeyEvent, onShowToast }) {
   const [activeKey, setActiveKey] = useState(null);
   const [controlEnabled, setControlEnabled] = useState(false);
   const controlWsRef = useRef(null);
 
   // Derived value: control is only truly active if BOTH the user has
   // pressed Start control AND the robot is currently connected.
-  // Computed directly during render — no extra state or effect needed
-  // to keep it in sync.
   const isControlActive = controlEnabled && connected;
 
   const controlEnabledRef = useRef(false);
@@ -53,7 +62,7 @@ function MovementControl({ connected, onKeyEvent }) {
 
   const handleStartControl = () => {
     if (!connected) {
-      alert(
+      onShowToast?.(
         "Robot is not connected. Please connect to the robot before starting control.",
       );
       return;

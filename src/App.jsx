@@ -6,6 +6,7 @@ import MovementControl from "./components/MovementControl/MovementControl";
 import ActionsPanel from "./components/Actions/ActionsPanel";
 import TerminalPanel from "./components/Terminal/TerminalPanel";
 import RecordingManagement from "./components/Recording/RecordingManagement";
+import Toast from "./components/Toast/Toast";
 
 const cardStyle = {
   border: "1px solid #e0e0e0",
@@ -27,6 +28,14 @@ function App() {
 
   const [isRecording, setIsRecording] = useState(false);
   const [currentSequence, setCurrentSequence] = useState([]);
+
+  // Shared toast notification state, so any component can trigger a
+  // brief on-screen message via the onShowToast callback prop.
+  const [toastMessage, setToastMessage] = useState("");
+
+  const showToast = (message) => {
+    setToastMessage(message);
+  };
 
   useEffect(() => {
     const ws = new WebSocket("ws://10.211.55.3:6789");
@@ -74,6 +83,7 @@ function App() {
           <MovementControl
             connected={connected}
             onKeyEvent={isRecording ? recordKeyEvent : undefined}
+            onShowToast={showToast}
           />
         </div>
         <div
@@ -100,6 +110,8 @@ function App() {
           />
         </div>
       </div>
+
+      <Toast message={toastMessage} onClose={() => setToastMessage("")} />
     </div>
   );
 }
