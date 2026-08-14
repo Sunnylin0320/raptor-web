@@ -56,8 +56,10 @@ function RecordingManagement({
   };
 
   const handleStartRecording = () => {
+    const startTime = Date.now();
     setCurrentSequence([]);
-    setRecordingStartTime(Date.now());
+    setRecordingStartTime(startTime);
+    setNow(startTime); 
     setIsRecording(true);
   };
 

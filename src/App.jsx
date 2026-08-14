@@ -70,14 +70,14 @@ function App() {
       </div>
 
       <div style={{ display: "flex", gap: "1rem" }}>
-        <div style={{ ...cardStyle, flex: 1 }}>
+        <div style={{ ...cardStyle, flex: 0.6 }}>
           <MovementControl
             onKeyEvent={isRecording ? recordKeyEvent : undefined}
           />
         </div>
         <div
           style={{
-            flex: 2,
+            flex: 2.4,
             display: "flex",
             flexDirection: "column",
             gap: "1rem",
