@@ -1,26 +1,23 @@
-// Movement control panel: keyboard-style directional buttons,
-// arranged in a 3x3 grid (Q W E / A S D / Z X C).
-// Control is only active after "Start control" is pressed, and
-// completely disabled after "Stop control" — mirrors the original
-// RaPToR toolkit's Start/End control safety design.
-//
-// Also reports every key press/release to the parent via onKeyEvent,
-// so RecordingManagement can capture the sequence when recording is active.
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import DirectionKey from "./DirectionKey";
 
 const VALID_KEYS = ["w", "a", "s", "d", "x", "q", "e", "z", "c"];
 
-function MovementControl({ onKeyEvent }) {
+function MovementControl({ connected, onKeyEvent }) {
   const [activeKey, setActiveKey] = useState(null);
   const [controlEnabled, setControlEnabled] = useState(false);
   const controlWsRef = useRef(null);
 
-  const controlEnabledRef = useRef(controlEnabled);
+  // Derived value: control is only truly active if BOTH the user has
+  // pressed Start control AND the robot is currently connected.
+  // Computed directly during render — no extra state or effect needed
+  // to keep it in sync.
+  const isControlActive = controlEnabled && connected;
+
+  const controlEnabledRef = useRef(false);
   useEffect(() => {
-    controlEnabledRef.current = controlEnabled;
-  }, [controlEnabled]);
+    controlEnabledRef.current = isControlActive;
+  }, [isControlActive]);
 
   useEffect(() => {
     const ws = new WebSocket("ws://10.211.55.3:6790");
@@ -55,6 +52,12 @@ function MovementControl({ onKeyEvent }) {
   }, [onKeyEvent]);
 
   const handleStartControl = () => {
+    if (!connected) {
+      alert(
+        "Robot is not connected. Please connect to the robot before starting control.",
+      );
+      return;
+    }
     setControlEnabled(true);
   };
 
@@ -96,7 +99,7 @@ function MovementControl({ onKeyEvent }) {
           marginBottom: "1rem",
         }}
       >
-        Movement Control {controlEnabled ? "🟢" : "🔴"}
+        Movement Control {isControlActive ? "🟢" : "🔴"}
       </h3>
 
       <div
@@ -105,8 +108,8 @@ function MovementControl({ onKeyEvent }) {
           flexDirection: "column",
           alignItems: "center",
           gap: "1rem",
-          opacity: controlEnabled ? 1 : 0.4,
-          pointerEvents: controlEnabled ? "auto" : "none",
+          opacity: isControlActive ? 1 : 0.4,
+          pointerEvents: isControlActive ? "auto" : "none",
         }}
       >
         <div
@@ -184,16 +187,18 @@ function MovementControl({ onKeyEvent }) {
         </div>
       </div>
 
-      <div style={{ marginTop: "1rem" }}>
-        {!controlEnabled ? (
+      <div
+        style={{ marginTop: "1rem", display: "flex", justifyContent: "center" }}
+      >
+        {!isControlActive ? (
           <button
             onClick={handleStartControl}
             style={{
-              width: "100%",
+              width: "70%",
               padding: "0.6rem",
-              background: "#e8f5e9",
-              color: "#2e7d32",
-              border: "1px solid #a5d6a7",
+              background: connected ? "#e8f5e9" : "#f5f5f5",
+              color: connected ? "#2e7d32" : "#999",
+              border: connected ? "1px solid #a5d6a7" : "1px solid #ddd",
               borderRadius: "6px",
               cursor: "pointer",
               fontWeight: 600,
@@ -205,7 +210,7 @@ function MovementControl({ onKeyEvent }) {
           <button
             onClick={handleStopControl}
             style={{
-              width: "100%",
+              width: "70%",
               padding: "0.6rem",
               background: "#fdecea",
               color: "#c62828",

@@ -72,6 +72,7 @@ function App() {
       <div style={{ display: "flex", gap: "1rem" }}>
         <div style={{ ...cardStyle, flex: 0.6 }}>
           <MovementControl
+            connected={connected}
             onKeyEvent={isRecording ? recordKeyEvent : undefined}
           />
         </div>
