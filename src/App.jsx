@@ -22,6 +22,8 @@ const headerCardStyle = {
   backgroundColor: "#fff",
 };
 
+const getTimestamp = () => new Date().toTimeString().slice(0, 8);
+
 function App() {
   const [connected, setConnected] = useState(false);
   const [sensorValues, setSensorValues] = useState({});
@@ -29,12 +31,22 @@ function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [currentSequence, setCurrentSequence] = useState([]);
 
-  // Shared toast notification state, so any component can trigger a
-  // brief on-screen message via the onShowToast callback prop.
   const [toastMessage, setToastMessage] = useState("");
-
   const showToast = (message) => {
     setToastMessage(message);
+  };
+
+  // Unified event log, shared across the whole app: movement key presses,
+  // action invocations, recording events, etc. all get logged here, then
+  // rendered by TerminalPanel — matching the original design's requirement
+  // that the terminal logs the robot's actions, not just typed commands.
+  const [eventLog, setEventLog] = useState([]);
+
+  const logEvent = (message, type = "info") => {
+    setEventLog((prev) => [
+      ...prev,
+      { timestamp: getTimestamp(), message, type },
+    ]);
   };
 
   useEffect(() => {
@@ -84,6 +96,7 @@ function App() {
             connected={connected}
             onKeyEvent={isRecording ? recordKeyEvent : undefined}
             onShowToast={showToast}
+            onLogEvent={logEvent}
           />
         </div>
         <div
@@ -95,10 +108,10 @@ function App() {
           }}
         >
           <div style={cardStyle}>
-            <ActionsPanel />
+            <ActionsPanel onLogEvent={logEvent} />
           </div>
           <div style={cardStyle}>
-            <TerminalPanel />
+            <TerminalPanel eventLog={eventLog} onLogEvent={logEvent} />
           </div>
         </div>
         <div style={{ ...cardStyle, flex: 1 }}>
@@ -107,6 +120,7 @@ function App() {
             setIsRecording={setIsRecording}
             currentSequence={currentSequence}
             setCurrentSequence={setCurrentSequence}
+            onLogEvent={logEvent}
           />
         </div>
       </div>

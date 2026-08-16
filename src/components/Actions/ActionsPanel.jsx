@@ -3,6 +3,8 @@
 // show a selected state on the button. Actions with parameters show a
 // selection + input + Run flow. All actions are sent to ros_bridge.py
 // over the control WebSocket (port 6790).
+// Every action invocation is also logged via onLogEvent, so it appears
+// in the shared Terminal event log.
 
 import { useState, useEffect, useRef } from "react";
 import ActionButton from "./ActionButton";
@@ -78,7 +80,6 @@ const ACTIONS = [
   },
 ];
 
-// Parses a simple "key: value, key2: value2" string (for flat params).
 function parseFlatParamText(text) {
   const params = {};
   if (!text.trim()) return params;
@@ -93,7 +94,7 @@ function parseFlatParamText(text) {
   return params;
 }
 
-function ActionsPanel() {
+function ActionsPanel({ onLogEvent }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [paramText, setParamText] = useState("");
   const [paramError, setParamError] = useState("");
@@ -113,6 +114,7 @@ function ActionsPanel() {
   const sendAction = (actionName, params) => {
     console.log(`Sending action "${actionName}" with params:`, params);
     actionWsRef.current?.send(JSON.stringify({ action: actionName, params }));
+    onLogEvent?.(`Action executed: ${actionName}`, "info");
   };
 
   const handleActionClick = (action) => {
@@ -132,15 +134,14 @@ function ActionsPanel() {
     setParamError("");
 
     if (action.isJson) {
-      // Nested-parameter actions: parse as real JSON
       try {
         const params = JSON.parse(paramText);
         sendAction(selectedAction, params);
       } catch (e) {
         setParamError("Invalid JSON: " + e.message);
+        onLogEvent?.(`Failed to run ${selectedAction}: invalid JSON`, "error");
       }
     } else {
-      // Flat parameter actions: use the simple key:value parser
       const params = parseFlatParamText(paramText);
       sendAction(selectedAction, params);
     }
@@ -164,7 +165,7 @@ function ActionsPanel() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
+          gridTemplateColumns: "repeat(2, 1fr)",
           gap: "0.5rem",
           marginBottom: "1rem",
         }}

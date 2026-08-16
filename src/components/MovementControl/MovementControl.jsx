@@ -6,21 +6,20 @@
 // Start control also requires the robot to be connected; if not,
 // the user is shown a toast notification prompting them to connect first.
 //
-// Also reports every key press/release to the parent via onKeyEvent,
-// so RecordingManagement can capture the sequence when recording is active.
+// Reports every key press/release to the parent via onKeyEvent (for
+// recording capture), and logs control start/stop and key presses via
+// onLogEvent, so they appear in the shared Terminal event log.
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import DirectionKey from "./DirectionKey";
 
 const VALID_KEYS = ["w", "a", "s", "d", "x", "q", "e", "z", "c"];
 
-function MovementControl({ connected, onKeyEvent, onShowToast }) {
+function MovementControl({ connected, onKeyEvent, onShowToast, onLogEvent }) {
   const [activeKey, setActiveKey] = useState(null);
   const [controlEnabled, setControlEnabled] = useState(false);
   const controlWsRef = useRef(null);
 
-  // Derived value: control is only truly active if BOTH the user has
-  // pressed Start control AND the robot is currently connected.
   const isControlActive = controlEnabled && connected;
 
   const controlEnabledRef = useRef(false);
@@ -49,8 +48,9 @@ function MovementControl({ connected, onKeyEvent, onShowToast }) {
       setActiveKey(key);
       sendKey(key);
       onKeyEvent?.(key);
+      onLogEvent?.(`${key.toUpperCase()} pressed`, "info");
     },
-    [onKeyEvent],
+    [onKeyEvent, onLogEvent],
   );
 
   const handleRelease = useCallback(() => {
@@ -68,12 +68,14 @@ function MovementControl({ connected, onKeyEvent, onShowToast }) {
       return;
     }
     setControlEnabled(true);
+    onLogEvent?.("Control started", "success");
   };
 
   const handleStopControl = () => {
     setControlEnabled(false);
     setActiveKey(null);
     sendKey("stop");
+    onLogEvent?.("Control stopped", "warning");
   };
 
   useEffect(() => {
