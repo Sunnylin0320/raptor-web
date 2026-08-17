@@ -2,6 +2,9 @@
 // Movement Control, manage the list of saved recordings, and trigger
 // playback. Mirrors the original Tkinter move.py's recording format:
 // a list of (key, duration) pairs.
+//
+// Tracks which recording (if any) is currently playing, so the Play
+// button gives clear visual feedback instead of appearing unresponsive.
 
 import { useState, useEffect, useRef } from "react";
 import RecordingItem from "./RecordingItem";
@@ -11,37 +14,39 @@ function RecordingManagement({
   setIsRecording,
   currentSequence,
   setCurrentSequence,
+  onLogEvent,
 }) {
   const [recordings, setRecordings] = useState({});
   const [recordingStartTime, setRecordingStartTime] = useState(null);
   const [now, setNow] = useState(() => Date.now());
-  const controlWsRef = useRef(null);
+  const [playingName, setPlayingName] = useState(null);
+  const wsRef = useRef(null);
 
-  // Separate WebSocket connection dedicated to recording save/load/play,
-  // so it doesn't interfere with the movement control connection.
   useEffect(() => {
     const ws = new WebSocket("ws://10.211.55.3:6790");
-    ws.onopen = () => console.log("Recording WebSocket connected");
+    ws.onopen = () => {
+      console.log("Recording WebSocket connected");
+      ws.send(JSON.stringify({ recording_action: "list" }));
+    };
     ws.onerror = (error) => console.error("Recording WebSocket error:", error);
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
+      console.log("RecordingManagement received:", data);
       if (data.type === "recordings_list") {
         setRecordings(data.recordings);
+      } else if (data.type === "playback_finished") {
+        // Backend confirms playback of this recording has completed.
+        setPlayingName((current) => (current === data.name ? null : current));
+        onLogEvent?.(`Finished playing: ${data.name}`, "success");
       }
     };
-    controlWsRef.current = ws;
-
-    // Request the existing recordings list on connect
-    ws.addEventListener("open", () => {
-      ws.send(JSON.stringify({ recording_action: "list" }));
-    });
+    wsRef.current = ws;
 
     return () => {
       ws.close();
     };
-  }, []);
+  }, [onLogEvent]);
 
-  // Tick every second while recording, so the duration display updates.
   useEffect(() => {
     if (!isRecording) return;
     const intervalId = setInterval(() => setNow(Date.now()), 1000);
@@ -59,15 +64,14 @@ function RecordingManagement({
     const startTime = Date.now();
     setCurrentSequence([]);
     setRecordingStartTime(startTime);
-    setNow(startTime); 
+    setNow(startTime);
     setIsRecording(true);
+    onLogEvent?.("Recording started", "info");
   };
 
   const handleStopRecording = () => {
     setIsRecording(false);
 
-    // Convert the raw {key, timestamp} events into (key, duration) pairs,
-    // matching the original move.py format.
     const pairs = [];
     for (let i = 0; i < currentSequence.length; i++) {
       const current = currentSequence[i];
@@ -79,7 +83,7 @@ function RecordingManagement({
     const nextIndex = Object.keys(recordings).length + 1;
     const name = `Recording_${String(nextIndex).padStart(2, "0")}`;
 
-    controlWsRef.current?.send(
+    wsRef.current?.send(
       JSON.stringify({
         recording_action: "save",
         name,
@@ -87,25 +91,19 @@ function RecordingManagement({
       }),
     );
 
+    onLogEvent?.(`Recording saved: ${name}`, "success");
     setCurrentSequence([]);
   };
 
   const handlePlay = (name) => {
-    controlWsRef.current?.send(
-      JSON.stringify({
-        recording_action: "play",
-        name,
-      }),
-    );
+    if (playingName) return; // prevent starting a second playback while one is running
+    setPlayingName(name);
+    wsRef.current?.send(JSON.stringify({ recording_action: "play", name }));
+    onLogEvent?.(`Playing: ${name}`, "info");
   };
 
   const handleDelete = (name) => {
-    controlWsRef.current?.send(
-      JSON.stringify({
-        recording_action: "delete",
-        name,
-      }),
-    );
+    wsRef.current?.send(JSON.stringify({ recording_action: "delete", name }));
   };
 
   const recordingNames = Object.keys(recordings);
@@ -120,7 +118,7 @@ function RecordingManagement({
           marginBottom: "1rem",
         }}
       >
-        Recording Management
+        Session Management
       </h3>
 
       {isRecording && (
@@ -137,6 +135,8 @@ function RecordingManagement({
           key={name}
           name={name}
           isRecording={false}
+          isPlaying={playingName === name}
+          disabled={playingName !== null && playingName !== name}
           onPlay={() => handlePlay(name)}
           onDelete={() => handleDelete(name)}
         />

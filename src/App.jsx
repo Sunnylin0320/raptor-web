@@ -1,5 +1,5 @@
 // Top-level layout for the RaPToR web dashboard.
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Header from "./components/Layout/Header";
 import RobotStatusPanel from "./components/RobotStatus/RobotStatusPanel";
 import MovementControl from "./components/MovementControl/MovementControl";
@@ -32,9 +32,9 @@ function App() {
   const [currentSequence, setCurrentSequence] = useState([]);
 
   const [toastMessage, setToastMessage] = useState("");
-  const showToast = (message) => {
+  const showToast = useCallback((message) => {
     setToastMessage(message);
-  };
+  }, []);
 
   // Unified event log, shared across the whole app: movement key presses,
   // action invocations, recording events, etc. all get logged here, then
@@ -42,12 +42,13 @@ function App() {
   // that the terminal logs the robot's actions, not just typed commands.
   const [eventLog, setEventLog] = useState([]);
 
-  const logEvent = (message, type = "info") => {
+  const logEvent = useCallback((message, type = "info") => {
     setEventLog((prev) => [
       ...prev,
       { timestamp: getTimestamp(), message, type },
     ]);
-  };
+  }, []);
+  
 
   useEffect(() => {
     const ws = new WebSocket("ws://10.211.55.3:6789");

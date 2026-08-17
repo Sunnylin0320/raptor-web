@@ -165,7 +165,7 @@ function ActionsPanel({ onLogEvent }) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(2, 1fr)",
+          gridTemplateColumns: "repeat(4, 1fr)",
           gap: "0.5rem",
           marginBottom: "1rem",
         }}
