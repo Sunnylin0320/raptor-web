@@ -94,7 +94,7 @@ function parseFlatParamText(text) {
   return params;
 }
 
-function ActionsPanel({ onLogEvent }) {
+function ActionsPanel({ onLogEvent, onRecordEvent }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [paramText, setParamText] = useState("");
   const [paramError, setParamError] = useState("");
@@ -123,6 +123,7 @@ function ActionsPanel({ onLogEvent }) {
 
     if (!action.requiresParams) {
       sendAction(action.name, {});
+      onRecordEvent?.(action.name);
       return;
     }
 

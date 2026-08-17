@@ -79,8 +79,11 @@ function App() {
     };
   }, []);
 
-  const recordKeyEvent = (key) => {
-    setCurrentSequence((prev) => [...prev, { key, timestamp: Date.now() }]);
+  const recordEvent = (event) => {
+    setCurrentSequence((prev) => [
+      ...prev,
+      { ...event, timestamp: Date.now() },
+    ]);
   };
 
   return (
@@ -97,7 +100,11 @@ function App() {
         <div style={{ ...cardStyle, flex: 0.6 }}>
           <MovementControl
             connected={connected}
-            onKeyEvent={isRecording ? recordKeyEvent : undefined}
+            onKeyEvent={
+              isRecording
+                ? (key) => recordEvent({ type: "key", key })
+                : undefined
+            }
             onShowToast={showToast}
             onLogEvent={logEvent}
           />
@@ -111,7 +118,14 @@ function App() {
           }}
         >
           <div style={cardStyle}>
-            <ActionsPanel onLogEvent={logEvent} />
+            <ActionsPanel
+              onLogEvent={logEvent}
+              onRecordEvent={
+                isRecording
+                  ? (name) => recordEvent({ type: "action", name })
+                  : undefined
+              }
+            />
           </div>
           <div style={cardStyle}>
             <TerminalPanel eventLog={eventLog} onLogEvent={logEvent} />

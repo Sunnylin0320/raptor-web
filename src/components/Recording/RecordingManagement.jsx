@@ -72,12 +72,23 @@ function RecordingManagement({
   const handleStopRecording = () => {
     setIsRecording(false);
 
-    const pairs = [];
+    const events = [];
     for (let i = 0; i < currentSequence.length; i++) {
       const current = currentSequence[i];
       const next = currentSequence[i + 1];
-      const durationMs = next ? next.timestamp - current.timestamp : 0;
-      pairs.push([current.key, durationMs / 1000]);
+      const delaySeconds = next
+        ? (next.timestamp - current.timestamp) / 1000
+        : 0;
+
+      if (current.type === "action") {
+        events.push({
+          type: "action",
+          name: current.name,
+          delay: delaySeconds,
+        });
+      } else {
+        events.push({ type: "key", key: current.key, delay: delaySeconds });
+      }
     }
 
     const nextIndex = Object.keys(recordings).length + 1;
@@ -87,7 +98,7 @@ function RecordingManagement({
       JSON.stringify({
         recording_action: "save",
         name,
-        sequence: pairs,
+        sequence: events,
       }),
     );
 
