@@ -4,10 +4,9 @@
 // lines shown in red.
 //
 // Also displays the shared eventLog (movement key presses, action
-// invocations, recording events, etc.) alongside typed command output,
-// so the terminal serves as a unified log of everything happening in
-// the system — matching the original design's requirement that the
-// terminal logs the robot's actions, not just typed commands.
+// invocations, recording events, etc.) merged chronologically with
+// typed command output, so the terminal serves as a unified, correctly
+// time-ordered log of everything happening in the system.
 
 import { useState, useEffect, useRef } from "react";
 
@@ -18,14 +17,15 @@ const TYPE_COLORS = {
   error: "#c62828",
 };
 
+const WELCOME_MESSAGE = {
+  text: "Terminal ready. Type a command and press Enter or Execute.",
+  color: "#999",
+  sortKey: 0,
+};
+
 function TerminalPanel({ eventLog = [], onLogEvent }) {
   const [command, setCommand] = useState("");
-  const [commandLines, setCommandLines] = useState([
-    {
-      text: "Terminal ready. Type a command and press Enter or Execute.",
-      isError: false,
-    },
-  ]);
+  const [commandLines, setCommandLines] = useState([]);
   const terminalWsRef = useRef(null);
   const outputRef = useRef(null);
 
@@ -41,7 +41,7 @@ function TerminalPanel({ eventLog = [], onLogEvent }) {
       if (data.type === "terminal_output") {
         setCommandLines((prev) => [
           ...prev,
-          { text: data.line, isError: data.is_error },
+          { text: data.line, isError: data.is_error, timestamp: Date.now() },
         ]);
         if (data.is_error) {
           onLogEvent?.(data.line.trim(), "error");
@@ -58,34 +58,39 @@ function TerminalPanel({ eventLog = [], onLogEvent }) {
     };
   }, [onLogEvent]);
 
-  // Combine the shared event log with locally-typed command output into
-  // a single, chronologically merged list for display.
   const combinedLines = [
+    WELCOME_MESSAGE,
     ...eventLog.map((event) => ({
       text: `[${event.timestamp}] ${event.message}`,
-      isError: event.type === "error" || event.type === "warning",
       color: TYPE_COLORS[event.type] ?? TYPE_COLORS.info,
+      sortKey: event.sortKey,
     })),
     ...commandLines.map((line) => ({
       text: line.text,
-      isError: line.isError,
-      isCommand: line.isCommand,
       color: line.isError ? "#c62828" : line.isCommand ? "#1565c0" : "#333",
+      sortKey: line.timestamp,
     })),
   ];
+
+  const sortedLines = [...combinedLines].sort((a, b) => a.sortKey - b.sortKey);
 
   useEffect(() => {
     if (outputRef.current) {
       outputRef.current.scrollTop = outputRef.current.scrollHeight;
     }
-  }, [combinedLines.length]);
+  }, [sortedLines.length]);
 
   const handleExecute = () => {
     if (!command.trim()) return;
 
     setCommandLines((prev) => [
       ...prev,
-      { text: `$ ${command}`, isError: false, isCommand: true },
+      {
+        text: `$ ${command}`,
+        isError: false,
+        isCommand: true,
+        timestamp: Date.now(),
+      },
     ]);
     terminalWsRef.current?.send(JSON.stringify({ command }));
     setCommand("");
@@ -126,7 +131,7 @@ function TerminalPanel({ eventLog = [], onLogEvent }) {
           borderRadius: "4px",
         }}
       >
-        {combinedLines.map((line, index) => (
+        {sortedLines.map((line, index) => (
           <div key={index} style={{ color: line.color }}>
             {line.text}
           </div>

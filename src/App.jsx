@@ -43,9 +43,11 @@ function App() {
   const [eventLog, setEventLog] = useState([]);
 
   const logEvent = useCallback((message, type = "info") => {
+    const sortKey = Date.now();
+    console.log(`[logEvent] "${message}" sortKey=${sortKey}`);
     setEventLog((prev) => [
       ...prev,
-      { timestamp: getTimestamp(), message, type },
+      { timestamp: getTimestamp(), sortKey, message, type },
     ]);
   }, []);
   
