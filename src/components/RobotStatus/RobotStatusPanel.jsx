@@ -49,14 +49,27 @@ function RobotStatusPanel({ sensorValues }) {
             No sensors selected. Toggle sensors below to display them here.
           </span>
         )}
-        {activeTopics.map((sensor) => (
-          <SensorStatusCard
-            key={sensor.topic}
-            label={formatSensorName(sensor.topic)}
-            value={sensorValues[sensor.topic] ?? "Waiting..."}
-            type="text"
-          />
-        ))}
+        {activeTopics.map((sensor) => {
+          const rawValue = sensorValues[sensor.topic];
+          const isBar = sensor.displayType === "percentage";
+
+          // Extract the numeric portion from strings like "78.0%" for the bar's
+          // width calculation, while still passing the original string as the
+          // displayed value.
+          const numericValue =
+            isBar && rawValue ? parseFloat(rawValue) : undefined;
+
+          return (
+            <SensorStatusCard
+              key={sensor.topic}
+              label={formatSensorName(sensor.topic)}
+              value={rawValue ?? "Waiting..."}
+              type={isBar ? "bar" : "text"}
+              max={sensor.max}
+              barValue={numericValue}
+            />
+          );
+        })}
       </div>
 
       <div style={{ paddingTop: "0.75rem" }}>

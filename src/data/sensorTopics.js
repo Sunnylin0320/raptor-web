@@ -1,11 +1,16 @@
 // List of all ROS 2 topics available from the Create 3 robot / Gazebo simulation.
 // This mirrors the dynamic topic discovery behavior of the original Tkinter RaPToR GUI,
 // where topics are listed as toggleable checkboxes and only enabled ones are subscribed to.
+//
+// displayType controls how SensorStatusCard renders the value:
+// "percentage" shows a progress bar (0-max range); omitted/"text" shows plain text.
 
 export const SENSOR_TOPICS = [
   {
     topic: "/battery_state",
     description: "Battery level, voltage, current, temperature",
+    displayType: "percentage",
+    max: 100,
   },
   { topic: "/dock_status", description: "Dock detection / docking status" },
   {
@@ -16,6 +21,8 @@ export const SENSOR_TOPICS = [
   {
     topic: "/ir_intensity",
     description: "IR proximity sensor readings (obstacle avoidance)",
+    displayType: "percentage",
+    max: 4095,
   },
   {
     topic: "/ir_opcode",

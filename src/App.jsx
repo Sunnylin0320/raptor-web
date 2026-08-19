@@ -26,7 +26,13 @@ const getTimestamp = () => new Date().toTimeString().slice(0, 8);
 
 function App() {
   const [connected, setConnected] = useState(false);
-  const [sensorValues, setSensorValues] = useState({});
+  // const [sensorValues, setSensorValues] = useState({});
+  const [sensorValues, setSensorValues] = useState({
+    "/battery_state": "78.0%",
+    "/ir_intensity": "2400",
+    "/dock_status": "Free",
+    "/odom": "x=1.23, y=0.45",
+  });
 
   const [isRecording, setIsRecording] = useState(false);
   const [currentSequence, setCurrentSequence] = useState([]);

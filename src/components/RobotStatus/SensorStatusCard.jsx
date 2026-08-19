@@ -6,14 +6,15 @@ function SensorStatusCard({
   value,
   type = "text",
   max = 100,
+  barValue,
   warning = false,
 }) {
   return (
     <div
       style={{
         padding: "0.5rem 1rem",
-        width: "180px", // fixed width so long topic names don't overflow into neighboring cards
-        flexShrink: 0, // don't let flexbox compress this card
+        width: "180px",
+        flexShrink: 0,
         boxSizing: "border-box",
       }}
     >
@@ -22,13 +23,13 @@ function SensorStatusCard({
           fontSize: "0.75rem",
           color: "#888",
           textTransform: "uppercase",
-          wordBreak: "break-word", // wrap long labels instead of overflowing horizontally
+          wordBreak: "break-word",
         }}
       >
         {label}
       </div>
 
-      {type === "bar" && (
+      {type === "bar" && barValue !== undefined && !isNaN(barValue) && (
         <div
           style={{
             background: "#eee",
@@ -39,10 +40,11 @@ function SensorStatusCard({
         >
           <div
             style={{
-              width: `${(value / max) * 100}%`,
+              width: `${Math.min((barValue / max) * 100, 100)}%`,
               background: warning ? "#e74c3c" : "#2ecc71",
               height: "100%",
               borderRadius: "3px",
+              transition: "width 0.3s ease",
             }}
           />
         </div>
