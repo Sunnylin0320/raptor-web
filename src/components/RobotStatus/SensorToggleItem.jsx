@@ -1,8 +1,9 @@
 import { formatSensorName } from "../../utils/formatSensorName";
 
-function SensorToggleItem({ topic, enabled, onToggle }) {
+function SensorToggleItem({ topic, description, enabled, onToggle }) {
   return (
     <label
+      title={description}
       style={{
         display: "flex",
         alignItems: "center",

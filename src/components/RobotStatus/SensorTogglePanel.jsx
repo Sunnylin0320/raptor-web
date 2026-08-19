@@ -22,6 +22,7 @@ function SensorTogglePanel({ enabledTopics, onToggle }) {
         <SensorToggleItem
           key={sensor.topic}
           topic={sensor.topic}
+          description={sensor.description}
           enabled={!!enabledTopics[sensor.topic]}
           onToggle={() => onToggle(sensor.topic)}
         />
