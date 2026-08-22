@@ -2,8 +2,11 @@
 // Renders one of three modes based on `type`:
 // - "bar": a progress bar (e.g. battery percentage)
 // - "status": a colored dot + label on the same line (e.g. docked, slipping)
-// - "text": plain text value (default), styled with a monospace-like feel
-//   for readability on numeric strings like "L=0.30, R=0.29"
+// - "text": plain text value (default)
+// A small "i" button in the top-right corner reveals the sensor's
+// description on click.
+
+import { useState } from "react";
 
 function SensorStatusCard({
   label,
@@ -13,7 +16,9 @@ function SensorStatusCard({
   barValue,
   warning = false,
   goodValues = [],
+  description,
 }) {
+  const [showInfo, setShowInfo] = useState(false);
   const isGood = goodValues.includes(value);
 
   return (
@@ -23,14 +28,65 @@ function SensorStatusCard({
         width: "220px",
         flexShrink: 0,
         boxSizing: "border-box",
+        position: "relative",
       }}
     >
+      {description && (
+        <button
+          onClick={() => setShowInfo(!showInfo)}
+          style={{
+            position: "absolute",
+            top: "4px",
+            right: "4px",
+            width: "13px",
+            height: "13px",
+            borderRadius: "50%",
+            border: "1px solid #ccc",
+            background: "#fff",
+            color: "#999",
+            fontSize: "0.55rem",
+            fontStyle: "normal",
+            fontWeight: 700,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 0,
+            lineHeight: 1,
+          }}
+        >
+          i
+        </button>
+      )}
+
+      {showInfo && (
+        <div
+          style={{
+            position: "absolute",
+            top: "24px",
+            right: "4px",
+            width: "180px",
+            background: "#333",
+            color: "#fff",
+            padding: "0.5rem 0.6rem",
+            borderRadius: "6px",
+            fontSize: "0.7rem",
+            lineHeight: 1.4,
+            zIndex: 20,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+          }}
+        >
+          {description}
+        </div>
+      )}
+
       <div
         style={{
           fontSize: "0.75rem",
           color: "#888",
           textTransform: "uppercase",
           wordBreak: "break-word",
+          paddingRight: "1.2rem",
         }}
       >
         {label}

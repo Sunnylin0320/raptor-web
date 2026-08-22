@@ -69,8 +69,8 @@ function RobotStatusPanel({ sensorValues }) {
               type={isBar ? "bar" : isStatus ? "status" : "text"}
               max={sensor.max}
               barValue={numericValue}
-              description={sensor.description}
               goodValues={sensor.goodValues}
+              description={sensor.description}
             />
           );
         })}

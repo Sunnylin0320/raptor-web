@@ -22,8 +22,6 @@ export const SENSOR_TOPICS = [
   {
     topic: "/ir_intensity",
     description: "IR proximity sensor readings (obstacle avoidance)",
-    displayType: "percentage",
-    max: 4095,
   },
   {
     topic: "/ir_opcode",
