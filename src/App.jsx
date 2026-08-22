@@ -7,6 +7,7 @@ import ActionsPanel from "./components/Actions/ActionsPanel";
 import TerminalPanel from "./components/Terminal/TerminalPanel";
 import RecordingManagement from "./components/Recording/RecordingManagement";
 import Toast from "./components/Toast/Toast";
+import { MOCK_SENSOR_VALUES } from "./data/mockSensorValues";
 
 const cardStyle = {
   border: "1px solid #e0e0e0",
@@ -27,12 +28,8 @@ const getTimestamp = () => new Date().toTimeString().slice(0, 8);
 function App() {
   const [connected, setConnected] = useState(false);
   // const [sensorValues, setSensorValues] = useState({});
-  const [sensorValues, setSensorValues] = useState({
-    "/battery_state": "78.0%",
-    "/ir_intensity": "2400",
-    "/dock_status": "Free",
-    "/odom": "x=1.23, y=0.45",
-  });
+  const [sensorValues, setSensorValues] = useState(MOCK_SENSOR_VALUES);
+
 
   const [isRecording, setIsRecording] = useState(false);
   const [currentSequence, setCurrentSequence] = useState([]);
