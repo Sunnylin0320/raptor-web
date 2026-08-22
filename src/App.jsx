@@ -125,7 +125,8 @@ function App() {
               onLogEvent={logEvent}
               onRecordEvent={
                 isRecording
-                  ? (name) => recordEvent({ type: "action", name })
+                  ? (name, params) =>
+                      recordEvent({ type: "action", name, params })
                   : undefined
               }
             />

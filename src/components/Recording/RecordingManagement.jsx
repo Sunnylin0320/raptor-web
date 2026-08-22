@@ -84,6 +84,7 @@ function RecordingManagement({
         events.push({
           type: "action",
           name: current.name,
+          params: current.params ?? {},
           delay: delaySeconds,
         });
       } else {
@@ -129,7 +130,7 @@ function RecordingManagement({
           marginBottom: "1rem",
         }}
       >
-        Session Management
+        Recording Management
       </h3>
 
       {isRecording && (

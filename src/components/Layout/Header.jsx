@@ -47,7 +47,7 @@ function Header({ connected }) {
           color: "#555",
         }}
       >
-        <button
+        {/* <button
           style={{
             padding: "0.4rem 0.8rem",
             border: "1px solid #ccc",
@@ -57,7 +57,7 @@ function Header({ connected }) {
           }}
         >
           Generate template
-        </button>
+        </button> */}
       </div>
     </div>
   );

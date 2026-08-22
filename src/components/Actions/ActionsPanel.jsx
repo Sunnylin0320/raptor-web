@@ -194,7 +194,7 @@ function ActionsPanel({ onLogEvent, onRecordEvent }) {
 
     if (!action.requiresParams) {
       sendAction(action.name, {});
-      onRecordEvent?.(action.name);
+      onRecordEvent?.(action.name, {});
       return;
     }
 
@@ -214,6 +214,7 @@ function ActionsPanel({ onLogEvent, onRecordEvent }) {
 
     const params = buildNestedParams(numericValues);
     sendAction(action.name, params);
+    onRecordEvent?.(action.name, params);
   };
 
   const selectedActionData = ACTIONS.find((a) => a.name === selectedAction);
