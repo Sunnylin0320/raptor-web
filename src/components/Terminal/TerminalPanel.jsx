@@ -48,11 +48,6 @@ function TerminalPanel({ eventLog = [], onLogEvent }) {
         }
       } else if (data.type === "terminal_clear") {
         setCommandLines([]);
-      } else if (data.type === "action_finished") {
-        const message = data.success
-          ? `Action completed: ${data.name}`
-          : `Action failed: ${data.name} (status=${data.status})`;
-        onLogEvent?.(message, data.success ? "success" : "error");
       }
     };
 
