@@ -1,7 +1,37 @@
-// Top header bar: app title, connection/recording status badges,
-// session info, and the "Generate template" action.
+// Top header bar: app title, connection status badge, and scene switcher.
+
+import { useState, useEffect, useRef } from "react";
 
 function Header({ connected }) {
+  const [selectedWorld, setSelectedWorld] = useState("depot");
+  const [switching, setSwitching] = useState(false);
+  const wsRef = useRef(null);
+
+  useEffect(() => {
+    const ws = new WebSocket("ws://10.211.55.3:6790");
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === "scene_switch_started") {
+        setSwitching(true);
+      }
+    };
+    wsRef.current = ws;
+    return () => ws.close();
+  }, []);
+
+  const handleSwitchScene = () => {
+    wsRef.current?.send(
+      JSON.stringify({
+        switch_scene: true,
+        world_name: selectedWorld,
+      }),
+    );
+    setSwitching(true);
+    setTimeout(() => {
+      setSwitching(false);
+    }, 1000);
+  };
+
   return (
     <div
       style={{
@@ -38,30 +68,40 @@ function Header({ connected }) {
         </span>
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "1.5rem",
-          fontSize: "0.85rem",
-          color: "#555",
-        }}
-      >
-        {/* <button
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        <select
+          value={selectedWorld}
+          onChange={(e) => setSelectedWorld(e.target.value)}
+          disabled={switching}
+          style={{
+            padding: "0.4rem 0.6rem",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            fontSize: "0.85rem",
+          }}
+        >
+          <option value="depot">Depot</option>
+          <option value="maze">Maze</option>
+        </select>
+
+        <button
+          onClick={handleSwitchScene}
+          disabled={switching}
           style={{
             padding: "0.4rem 0.8rem",
             border: "1px solid #ccc",
             borderRadius: "4px",
-            background: "#f5f5f5",
-            cursor: "pointer",
+            background: switching ? "#eee" : "#f5f5f5",
+            color: switching ? "#999" : "#333",
+            cursor: switching ? "default" : "pointer",
+            fontSize: "0.85rem",
           }}
         >
-          Generate template
-        </button> */}
+          {switching ? "Switching... (1-2 min)" : "Switch Scene"}
+        </button>
       </div>
     </div>
   );
 }
 
 export default Header;
-
