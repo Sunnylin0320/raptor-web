@@ -27,8 +27,8 @@ const getTimestamp = () => new Date().toTimeString().slice(0, 8);
 
 function App() {
   const [connected, setConnected] = useState(false);
-  // const [sensorValues, setSensorValues] = useState({});
-  const [sensorValues, setSensorValues] = useState(MOCK_SENSOR_VALUES);
+  const [sensorValues, setSensorValues] = useState({});
+  // const [sensorValues, setSensorValues] = useState(MOCK_SENSOR_VALUES);
 
 
   const [isRecording, setIsRecording] = useState(false);
