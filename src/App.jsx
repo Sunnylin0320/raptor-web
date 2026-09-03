@@ -7,7 +7,7 @@ import ActionsPanel from "./components/Actions/ActionsPanel";
 import TerminalPanel from "./components/Terminal/TerminalPanel";
 import RecordingManagement from "./components/Recording/RecordingManagement";
 import Toast from "./components/Toast/Toast";
-import { MOCK_SENSOR_VALUES } from "./data/mockSensorValues";
+// import { MOCK_SENSOR_VALUES } from "./data/mockSensorValues";
 
 const cardStyle = {
   border: "1px solid #e0e0e0",
