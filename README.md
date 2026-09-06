@@ -40,6 +40,8 @@ cd raptor-web
 npm install
 ```
 
+*(Note: if you downloaded this as a ZIP from GitHub instead of cloning, the extracted folder will be named `raptor-web-main` — `cd` into that folder instead.)*
+
 ## Running
 
 ```bash
